@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بطولة رقي | النسخة الثالثة</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<header class="topbar">
+ <a class="brand" href="#" onclick="showSection('matches');return false">
+  <img src="roqi-association-logo.jpg" onerror="this.style.display='none'" alt="شعار رقي">
+  <span><b>بطولة رقي</b><small>النسخة الثالثة</small></span>
+ </a>
+ <span class="edition"><i class="fa-solid fa-trophy"></i> نسخة تجريبية</span>
+</header>
+<section class="hero">
+ <div class="hero-pattern"></div>
+ <div class="hero-inner">
+  <span class="eyebrow"><i class="fa-solid fa-circle"></i> رابطة الثقافة والقيم</span>
+  <h1>كرة القدم تجمعنا</h1>
+  <p>كل لحظة في البطولة.. تستحق أن تُروى.</p>
+  <div class="hero-meta"><span><i class="fa-solid fa-location-dot"></i> ملعب بوطريفية</span><span><i class="fa-solid fa-people-group"></i> 8 فرق · مجموعتان</span></div>
+ </div>
+ <div class="hero-mark">ر</div>
+</section>
+<main>
+ <div class="section-nav" id="section-nav">
+  <button class="nav active" data-section="matches" onclick="showSection('matches')"><i class="fa-solid fa-futbol"></i> المباريات</button>
+  <button class="nav" data-section="standings" onclick="showSection('standings')"><i class="fa-solid fa-ranking-star"></i> الترتيب</button>
+  <button class="nav" data-section="scorers" onclick="showSection('scorers')"><i class="fa-solid fa-bullseye"></i> الهدافون</button>
+  <button class="nav" data-section="assists" onclick="showSection('assists')"><i class="fa-solid fa-wand-magic-sparkles"></i> الصناع</button>
+  <button class="nav" data-section="clubs" onclick="showSection('clubs')"><i class="fa-solid fa-shield-halved"></i> الفرق</button>
+ </div>
+ <section class="page active" id="matches">
+  <div class="heading"><div><span class="kicker">تابع المنافسة</span><h2>المباريات</h2></div><span class="heading-icon"><i class="fa-solid fa-calendar-days"></i></span></div>
+  <div class="match-controls"><button class="all-btn" onclick="showAllMatches()"><i class="fa-solid fa-list"></i> جميع المباريات</button><div class="filters"><button class="filter active" data-filter="all" onclick="filterMatches('all')">الكل</button><button class="filter" data-filter="A" onclick="filterMatches('A')">المجموعة A</button><button class="filter" data-filter="B" onclick="filterMatches('B')">المجموعة B</button></div></div>
+  <div id="matches-list"><div class="round-title"><h3>جدول اللقاءات</h3><span>بيانات تجريبية</span></div><div id="matches-container" class="match-grid"></div></div>
+  <div id="match-view" hidden><button class="back-btn" onclick="showAllMatches()"><i class="fa-solid fa-arrow-right"></i> العودة لجميع المباريات</button><div id="match-detail"></div></div>
+ </section>
+ <section class="page" id="standings">
+  <div class="heading"><div><span class="kicker">حصيلة الجولة التجريبية</span><h2>ترتيب المجموعات</h2></div><span class="heading-icon"><i class="fa-solid fa-ranking-star"></i></span></div>
+  <div class="tabs"><button class="tab active" onclick="renderStandings('A',this)">المجموعة A</button><button class="tab" onclick="renderStandings('B',this)">المجموعة B</button></div><div id="standings-content"></div>
+ </section>
+ <section class="page" id="scorers">
+  <div class="heading"><div><span class="kicker">أصحاب اللمسة الأخيرة</span><h2>ترتيب الهدافين</h2></div><span class="heading-icon"><i class="fa-solid fa-bullseye"></i></span></div><div class="notice">أسماء وأرقام افتراضية لأغراض المعاينة.</div><div id="scorers-content"></div>
+ </section>
+ <section class="page" id="assists">
+  <div class="heading"><div><span class="kicker">صُنّاع الفرص</span><h2>ترتيب صناع الأهداف</h2></div><span class="heading-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span></div><div class="notice">أسماء وأرقام افتراضية لأغراض المعاينة.</div><div id="assists-content"></div>
+ </section>
+ <section class="page" id="clubs">
+  <div class="heading"><div><span class="kicker">الفرق المشاركة</span><h2>أندية البطولة</h2></div><span class="heading-icon"><i class="fa-solid fa-shield-halved"></i></span></div><div id="clubs-content" class="clubs-grid"></div>
+ </section>
+</main>
+<nav class="bottom-nav" aria-label="التنقل الرئيسي">
+ <button class="active" data-section="matches" onclick="showSection('matches')"><i class="fa-solid fa-futbol"></i><span>المباريات</span></button>
+ <button data-section="standings" onclick="showSection('standings')"><i class="fa-solid fa-ranking-star"></i><span>الترتيب</span></button>
+ <button data-section="scorers" onclick="showSection('scorers')"><i class="fa-solid fa-bullseye"></i><span>الهدافون</span></button>
+ <button data-section="assists" onclick="showSection('assists')"><i class="fa-solid fa-wand-magic-sparkles"></i><span>الصناع</span></button>
+ <button data-section="clubs" onclick="showSection('clubs')"><i class="fa-solid fa-shield-halved"></i><span>الفرق</span></button>
+</nav>
+<footer><img src="roqi-association-logo.jpg" onerror="this.style.display='none'" alt=""><b>بطولة رقي · النسخة الثالثة</b><small>رابطة الثقافة والقيم · تصميم تجريبي</small></footer>
+<script src="script.js"></script>
+</body></html>
