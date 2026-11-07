@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12b8b0">
+  <title>لوحة إدارة رابطة رقي</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="roqi-association-logo.jpg" alt="شعار الرابطة" onerror="this.style.display='none'">
+        <div>
+          <strong>رابطة رقي</strong>
+          <span>لوحة إدارة البطولة</span>
+        </div>
+      </div>
+
+      <div class="sidebar-label">القائمة الرئيسية</div>
+
+      <nav class="side-nav" aria-label="القائمة الرئيسية">
+        <button class="nav-item active" data-view="overview">
+          <span class="nav-icon">▦</span> نظرة عامة
+        </button>
+        <button class="nav-item" data-view="matches">
+          <span class="nav-icon">⚽</span> إدارة المباريات
+        </button>
+        <button class="nav-item" data-view="teams">
+          <span class="nav-icon">♧</span> إدارة الفرق
+        </button>
+        <button class="nav-item" data-view="players">
+          <span class="nav-icon">♙</span> إدارة اللاعبين
+        </button>
+        <button class="nav-item" data-view="events">
+          <span class="nav-icon">◷</span> أحداث المباريات
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon">⚙</span> إعدادات البطولة
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="preview-note">
+          <span class="status-dot"></span>
+          <div>
+            <b>وضع الواجهة التجريبية</b>
+            <small>التغييرات محفوظة على هذا الجهاز فقط</small>
+          </div>
+        </div>
+
+        <a href="index.html" class="site-link">↗ عرض موقع البطولة</a>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة">☰</button>
+
+        <div>
+          <span class="eyebrow">بطولة رقي · النسخة الثالثة</span>
+          <h1 id="pageTitle">نظرة عامة</h1>
+        </div>
+
+        <div class="top-actions">
+          <span class="admin-avatar">م</span>
+          <div class="admin-user">
+            <b>مدير الرابطة</b>
+            <small>حساب الإدارة</small>
+          </div>
+        </div>
+      </header>
+
+      <section class="view active" id="view-overview">
+        <div class="welcome-banner">
+          <div>
+            <span class="banner-kicker">أهلًا بك في مركز الإدارة</span>
+            <h2>إدارة البطولة، من مكان واحد.</h2>
+            <p>تحكم في المباريات والفرق واللاعبين وأحداث اللقاءات.</p>
+          </div>
+          <div class="banner-mark">ر</div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-symbol turquoise">⚽</span>
+            <span class="stat-label">المباريات</span>
+            <strong id="statMatches">8</strong>
+            <small>مباريات مسجلة</small>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-symbol navy">♧</span>
+            <span class="stat-label">الفرق</span>
+            <strong id="statTeams">8</strong>
+            <small>فرق البطولة</small>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-symbol gold">♙</span>
+            <span class="stat-label">اللاعبون</span>
+            <strong id="statPlayers">0</strong>
+            <small>أسماء مضافة يدويًا</small>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-symbol coral">◷</span>
+            <span class="stat-label">الأحداث</span>
+            <strong id="statEvents">0</strong>
+            <small>أهداف وبطاقات وغيرها</small>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <div>
+            <h2>الوصول السريع</h2>
+            <p>ابدأ بإدارة الجزء الذي تحتاج إليه.</p>
+          </div>
+        </div>
+
+        <div class="quick-grid">
+          <button class="quick-card" data-go="matches">
+            <span class="quick-icon">⚽</span>
+            <b>إدارة المباريات</b>
+            <small>النتائج والمواعيد والحالة</small>
+            <span class="quick-arrow">←</span>
+          </button>
+
+          <button class="quick-card" data-go="teams">
+            <span class="quick-icon">♧</span>
+            <b>إدارة الفرق</b>
+            <small>أسماء الفرق وشعاراتها</small>
+            <span class="quick-arrow">←</span>
+          </button>
+
+          <button class="quick-card" data-go="players">
+            <span class="quick-icon">♙</span>
+            <b>إدارة اللاعبين</b>
+            <small>الاسم والفريق</small>
+            <span class="quick-arrow">←</span>
+          </button>
+
+          <button class="quick-card" data-go="settings">
+            <span class="quick-icon">⚙</span>
+            <b>بيانات البطولة</b>
+            <small>الاسم والملعب والحكم</small>
+            <span class="quick-arrow">←</span>
+          </button>
+        </div>
+
+        <div class="content-card">
+          <div class="section-heading compact">
+            <div>
+              <h2>المباريات الأخيرة</h2>
+              <p>عرض سريع للبيانات التجريبية.</p>
+            </div>
+            <button class="text-button" data-go="matches">عرض الكل ←</button>
+          </div>
+
+          <div id="overviewMatches" class="mini-match-list"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-matches">
+        <div class="page-intro">
+          <div>
+            <h2>إدارة المباريات</h2>
+            <p>أضف المباريات التجريبية وعدّل نتيجتها أو حالتها. سيتم ربطها بقاعدة البيانات لاحقًا.</p>
+          </div>
+          <button class="primary-button" id="addMatchBtn">＋ إضافة مباراة</button>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            ⌕
+            <input id="matchSearch" placeholder="ابحث عن فريق أو مباراة">
+          </label>
+
+          <select id="matchFilter" aria-label="تصفية المباريات">
+            <option value="all">كل الحالات</option>
+            <option value="upcoming">لم تبدأ</option>
+            <option value="live">جارية</option>
+            <option value="finished">انتهت</option>
+          </select>
+        </div>
+
+        <div class="content-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>المباراة</th>
+                  <th>النتيجة</th>
+                  <th>الحالة</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="matchesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-teams">
+        <div class="page-intro">
+          <div>
+            <h2>إدارة الفرق</h2>
+            <p>أسماء الفرق الحالية تجريبية ويمكن تعديلها لاحقًا.</p>
+          </div>
+          <button class="primary-button" id="addTeamBtn">＋ إضافة فريق</button>
+        </div>
+
+        <div id="teamsGrid" class="teams-grid"></div>
+      </section>
+
+      <section class="view" id="view-players">
+        <div class="page-intro">
+          <div>
+            <h2>إدارة اللاعبين</h2>
+            <p>أضف اللاعب واربطه بفريقه. لا حاجة لإدخال القائمة كاملة الآن.</p>
+          </div>
+          <button class="primary-button" id="addPlayerBtn">＋ إضافة لاعب</button>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            ⌕
+            <input id="playerSearch" placeholder="ابحث عن لاعب">
+          </label>
+
+          <select id="playerTeamFilter" aria-label="تصفية حسب الفريق">
+            <option value="all">كل الفرق</option>
+          </select>
+        </div>
+
+        <div class="content-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>اللاعب</th>
+                  <th>الفريق</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="playersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-events">
+        <div class="page-intro">
+          <div>
+            <h2>أحداث المباريات</h2>
+            <p>سجّل هدفًا أو بطاقة أو تبديلًا. في هذه النسخة تُحفظ الأحداث محليًا.</p>
+          </div>
+          <button class="primary-button" id="addEventBtn">＋ إضافة حدث</button>
+        </div>
+
+        <div class="content-card">
+          <div id="eventsList" class="events-list"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="page-intro">
+          <div>
+            <h2>إعدادات البطولة</h2>
+            <p>تعديل المعلومات العامة التي تظهر في الموقع.</p>
+          </div>
+        </div>
+
+        <form class="content-card settings-form" id="settingsForm">
+          <label>
+            اسم البطولة
+            <input name="title" value="بطولة رقي – النسخة الثالثة" required>
+          </label>
+
+          <label>
+            اسم الرابطة
+            <input name="association" value="رابطة بطولة رقي" required>
+          </label>
+
+          <label>
+            الملعب
+            <input name="stadium" value="ملعب بوطريفية">
+          </label>
+
+          <label>
+            الحكم
+            <input name="referee" value="محمد يحي ربيع">
+          </label>
+
+          <label>
+            لون الهوية
+            <input name="accent" value="#12b8b0" type="color">
+          </label>
+
+          <button class="primary-button" type="submit">حفظ الإعدادات محليًا</button>
+        </form>
+      </section>
+
+      <footer class="main-footer">
+        <span>رابطة رقي · لوحة الإدارة</span>
+        <span>واجهة أولية · غير متصلة بقاعدة بيانات</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">إضافة</h2>
+        <button class="icon-button" id="closeModal" aria-label="إغلاق">×</button>
+      </div>
+
+      <form id="modalForm">
+        <div id="modalFields" class="modal-fields"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" id="cancelModal">إلغاء</button>
+          <button type="submit" class="primary-button">حفظ</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
