@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة إدارة بطولة رقي</title>
 <link rel="stylesheet" href="app.css">
+<style>
+  .tab{padding:10px 4px;font-size:13px}
+  .badge{padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid #1f5a56;white-space:nowrap}
+  .badge.live{background:#12b8b0;color:#04201f;border-color:#12b8b0}
+  .badge.finished{opacity:.7}
+  .mcard{border:1px solid #1f5a56;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#0f2827}
+  .mtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .mteams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;gap:8px}
+  .mscore{font-size:24px;font-weight:800}
+  .meta{opacity:.75;line-height:1.9;font-size:12.5px}
+  .pill{font-size:12px;opacity:.8}
+  .acts.wrap{flex-wrap:wrap}
+  .score{text-align:center;font-size:19px;font-weight:800}
+  .center{display:flex;justify-content:center}
+  .hint{color:#ffd37a}
+</style>
 </head>
 <body>
 <header>
@@ -14,18 +30,95 @@
 
 <main>
   <div class="tabs">
-    <button class="tab active" data-tab="teams">الفرق</button>
+    <button class="tab active" data-tab="matches">المباريات</button>
+    <button class="tab" data-tab="events">الأحداث</button>
+    <button class="tab" data-tab="teams">الفرق</button>
     <button class="tab" data-tab="players">اللاعبون</button>
   </div>
 
-  <section id="tab-teams" class="stack">
+  <!-- المباريات -->
+  <section id="tab-matches" class="stack">
+    <div class="card">
+      <h2 id="matchFormTitle">جدولة مباراة</h2>
+      <label>المجموعة
+        <select id="mGroup"><option value="A">المجموعة A</option><option value="B">المجموعة B</option></select>
+      </label>
+      <label>الفريق الأول <select id="mHome"></select></label>
+      <label>الفريق الثاني <select id="mAway"></select></label>
+      <label>التاريخ والوقت <input type="datetime-local" id="mKickoff"></label>
+      <label>الملعب <input id="mVenue" value="ملعب بوطريفية"></label>
+      <label>حكم اللقاء <input id="mReferee" value="محمد يحي ربيع"></label>
+      <label>الجولة / المرحلة <input id="mRound" placeholder="مثال: الجولة الأولى"></label>
+      <label>مدة المباراة (بالدقائق) <input type="number" id="mDuration" min="1" value="60"></label>
+      <label>الحالة
+        <select id="mStatus">
+          <option value="scheduled">مجدولة</option>
+          <option value="live">جارية</option>
+          <option value="finished">منتهية</option>
+        </select>
+      </label>
+      <button id="saveMatchBtn">حفظ المباراة</button>
+      <button class="ghost" id="cancelMatchBtn" hidden>إلغاء التعديل</button>
+    </div>
+
+    <div class="card">
+      <h2>جدول المباريات</h2>
+      <label>عرض
+        <select id="mFilter">
+          <option value="all">كل المباريات</option>
+          <option value="scheduled">المجدولة</option>
+          <option value="live">الجارية</option>
+          <option value="finished">المنتهية</option>
+        </select>
+      </label>
+      <div id="matchesList" class="stack"></div>
+    </div>
+  </section>
+
+  <!-- الأحداث -->
+  <section id="tab-events" class="stack" hidden>
+    <div class="card">
+      <h2>اختر المباراة</h2>
+      <select id="eMatch"></select>
+      <div id="eScore" class="score"></div>
+      <div class="center"><span id="eBadge"></span></div>
+      <div id="eStatusActs" class="acts wrap center"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="eventFormTitle">تسجيل حدث</h2>
+      <label>نوع الحدث
+        <select id="eType">
+          <option value="goal">⚽ هدف</option>
+          <option value="yellow">🟨 بطاقة صفراء</option>
+          <option value="red">🟥 بطاقة حمراء</option>
+          <option value="substitution">🔄 تبديل</option>
+        </select>
+      </label>
+      <label>الفريق <select id="eTeam"></select></label>
+      <label><span id="playerLbl">المسجّل</span> <select id="ePlayer"></select></label>
+      <small id="eHint" class="hint" hidden>هذا الفريق ليس له لاعبون. أضفهم من تبويب «اللاعبون».</small>
+      <label id="assistWrap">صانع الهدف <select id="eAssist"></select></label>
+      <label id="subWrap" hidden>اللاعب البديل <select id="eSub"></select></label>
+      <label>الدقيقة <input type="number" id="eMinute" min="0" value="1"></label>
+      <label>وقت بدل الضائع <input type="number" id="eAdded" min="0" value="0"></label>
+      <label>ملاحظات <input id="eNotes" placeholder="اختياري"></label>
+      <button id="saveEventBtn">إضافة الحدث</button>
+      <button class="ghost" id="cancelEventBtn" hidden>إلغاء التعديل</button>
+    </div>
+
+    <div class="card">
+      <h2>أحداث المباراة</h2>
+      <div id="eventsList"></div>
+    </div>
+  </section>
+
+  <!-- الفرق -->
+  <section id="tab-teams" class="stack" hidden>
     <div class="card">
       <h2>إضافة فرق</h2>
       <label>المجموعة
-        <select id="teamGroup">
-          <option value="A">المجموعة A</option>
-          <option value="B">المجموعة B</option>
-        </select>
+        <select id="teamGroup"><option value="A">المجموعة A</option><option value="B">المجموعة B</option></select>
       </label>
       <label>أسماء الفرق (اسم في كل سطر)
         <textarea id="teamNames" placeholder="فريق 1&#10;فريق 2"></textarea>
@@ -36,6 +129,7 @@
     <div class="card"><h2>المجموعة B</h2><div id="listB"></div></div>
   </section>
 
+  <!-- اللاعبون -->
   <section id="tab-players" class="stack" hidden>
     <div class="card">
       <h2>إضافة لاعبين</h2>
@@ -58,10 +152,34 @@
 <script src="app.js"></script>
 <script>
 const POSITIONS = ["حارس مرمى", "مدافع", "وسط", "مهاجم"];
-let teams = [];
-let players = [];
+const TYPE_LABELS = { goal: "⚽ هدف", yellow: "🟨 بطاقة صفراء", red: "🟥 بطاقة حمراء", substitution: "🔄 تبديل" };
+const STATUS_LABELS = { scheduled: "مجدولة", live: "جارية", finished: "انتهت" };
+const DEFAULT_VENUE = "ملعب بوطريفية";
+const DEFAULT_REFEREE = "محمد يحي ربيع";
 
+let teams = [], players = [], matches = [], events = [];
+let editingMatchId = null, editingEventId = null;
+
+/* ---------- أدوات ---------- */
 const lines = (v) => v.split("\n").map((s) => s.trim()).filter(Boolean);
+const teamName = (id) => teams.find((t) => t.id === id)?.name || "—";
+const playerName = (id) => players.find((p) => p.id === id)?.name || "—";
+const getMatch = (id) => matches.find((m) => m.id === id);
+const matchLabel = (m) => teamName(m.home_team_id) + " × " + teamName(m.away_team_id);
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  return new Intl.DateTimeFormat("ar-MR", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  }).format(d);
+}
+
+function toLocalInput(iso) {
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
 
 function keepValue(select, html) {
   const current = select.value;
@@ -69,61 +187,42 @@ function keepValue(select, html) {
   if ([...select.options].some((o) => o.value === current)) select.value = current;
 }
 
+function score(m) {
+  const goals = events.filter((e) => e.match_id === m.id && e.type === "goal");
+  return {
+    home: goals.filter((e) => e.team_id === m.home_team_id).length,
+    away: goals.filter((e) => e.team_id === m.away_team_id).length
+  };
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  ["matches", "events", "teams", "players"].forEach((n) => { $("tab-" + n).hidden = n !== name; });
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- التحميل ---------- */
 async function load() {
-  const [t, p] = await Promise.all([
+  const [t, p, m, e] = await Promise.all([
     db.from("teams").select("*").order("created_at"),
-    db.from("players").select("*").order("created_at")
+    db.from("players").select("*").order("created_at"),
+    db.from("matches").select("*").order("kickoff"),
+    db.from("events").select("*").order("created_at")
   ]);
-  const err = t.error || p.error;
+  const err = t.error || p.error || m.error || e.error;
   if (err) return toast(friendlyError(err), true);
-  teams = t.data;
-  players = p.data;
+  teams = t.data; players = p.data; matches = m.data; events = e.data;
   render();
 }
 
-function teamRow(t) {
-  const n = players.filter((p) => p.team_id === t.id).length;
-  return `<div class="row">
-    <div><b>${esc(t.name)}</b><small>${n} لاعب</small></div>
-    <div class="acts">
-      <button class="ghost sm" data-act="team-rename" data-id="${t.id}">تعديل</button>
-      <button class="ghost sm danger" data-act="team-del" data-id="${t.id}">حذف</button>
-    </div>
-  </div>`;
-}
-
 function render() {
-  for (const g of ["A", "B"]) {
-    const list = teams.filter((t) => t.grp === g);
-    $("list" + g).innerHTML = list.length
-      ? list.map(teamRow).join("")
-      : `<p class="empty">لا توجد فرق بعد</p>`;
-  }
-
-  const opts = teams
-    .map((t) => `<option value="${t.id}">${esc(t.name)} (${t.grp})</option>`)
-    .join("");
-  keepValue($("playerTeam"), opts || `<option value="">أضف فريقًا أولًا</option>`);
-  keepValue($("playerFilter"), `<option value="all">كل الفرق</option>` + opts);
-  renderPlayers();
-}
-
-function renderPlayers() {
-  const f = $("playerFilter").value;
-  const list = players.filter((p) => f === "all" || p.team_id === f);
-  $("playersList").innerHTML = list.length
-    ? list.map((p) => {
-        const t = teams.find((x) => x.id === p.team_id);
-        return `<div class="row">
-          <div><b>${esc(p.name)}</b>
-          <small>${esc(t ? t.name : "—")}${p.position ? " · " + esc(p.position) : ""}</small></div>
-          <div class="acts">
-            <button class="ghost sm" data-act="player-rename" data-id="${p.id}">تعديل</button>
-            <button class="ghost sm danger" data-act="player-del" data-id="${p.id}">حذف</button>
-          </div>
-        </div>`;
-      }).join("")
-    : `<p class="empty">لا يوجد لاعبون</p>`;
+  renderTeams();
+  renderPlayerSelects();
+  renderPlayersList();
+  fillMatchTeams();
+  renderMatches();
+  renderEventMatchSelect();
+  renderEventPanel();
 }
 
 async function run(promise, okMessage) {
@@ -133,7 +232,23 @@ async function run(promise, okMessage) {
   await load();
 }
 
-/* الإضافة */
+/* ---------- الفرق ---------- */
+function teamRow(t) {
+  const n = players.filter((p) => p.team_id === t.id).length;
+  return '<div class="row"><div><b>' + esc(t.name) + '</b><small>' + n + ' لاعب</small></div>' +
+    '<div class="acts">' +
+    '<button class="ghost sm" data-act="team-rename" data-id="' + t.id + '">تعديل</button>' +
+    '<button class="ghost sm danger" data-act="team-del" data-id="' + t.id + '">حذف</button>' +
+    '</div></div>';
+}
+
+function renderTeams() {
+  for (const g of ["A", "B"]) {
+    const list = teams.filter((t) => t.grp === g);
+    $("list" + g).innerHTML = list.length ? list.map(teamRow).join("") : '<p class="empty">لا توجد فرق بعد</p>';
+  }
+}
+
 $("addTeamsBtn").onclick = async () => {
   const names = lines($("teamNames").value);
   if (!names.length) return toast("اكتب اسم فريق واحد على الأقل", true);
@@ -145,67 +260,238 @@ $("addTeamsBtn").onclick = async () => {
   await load();
 };
 
+/* ---------- اللاعبون ---------- */
+function renderPlayerSelects() {
+  const opts = teams.map((t) => '<option value="' + t.id + '">' + esc(t.name) + ' (' + t.grp + ')</option>').join("");
+  keepValue($("playerTeam"), opts || '<option value="">أضف فريقًا أولًا</option>');
+  keepValue($("playerFilter"), '<option value="all">كل الفرق</option>' + opts);
+}
+
+function renderPlayersList() {
+  const f = $("playerFilter").value;
+  const list = players.filter((p) => f === "all" || p.team_id === f);
+  $("playersList").innerHTML = list.length
+    ? list.map((p) =>
+        '<div class="row"><div><b>' + esc(p.name) + '</b><small>' + esc(teamName(p.team_id)) +
+        (p.position ? ' · ' + esc(p.position) : '') + '</small></div>' +
+        '<div class="acts">' +
+        '<button class="ghost sm" data-act="player-rename" data-id="' + p.id + '">تعديل</button>' +
+        '<button class="ghost sm danger" data-act="player-del" data-id="' + p.id + '">حذف</button>' +
+        '</div></div>').join("")
+    : '<p class="empty">لا يوجد لاعبون</p>';
+}
+
 $("addPlayersBtn").onclick = async () => {
   const team_id = $("playerTeam").value;
   const names = lines($("playerNames").value);
   if (!team_id) return toast("أضف فريقًا أولًا", true);
   if (!names.length) return toast("اكتب اسم لاعب واحد على الأقل", true);
   const position = $("playerPos").value || null;
-  const { error } = await db
-    .from("players")
-    .insert(names.map((name) => ({ name, team_id, position })));
+  const { error } = await db.from("players").insert(names.map((name) => ({ name, team_id, position })));
   if (error) return toast(friendlyError(error), true);
   $("playerNames").value = "";
   toast("تمت إضافة " + names.length + " لاعب");
   await load();
 };
 
-/* التعديل والحذف */
-document.addEventListener("click", async (e) => {
-  const b = e.target.closest("[data-act]");
-  if (!b) return;
-  const id = b.dataset.id;
+/* ---------- المباريات ---------- */
+function fillMatchTeams() {
+  const g = $("mGroup").value;
+  const opts = teams.filter((t) => t.grp === g)
+    .map((t) => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join("");
+  const empty = '<option value="">اختر الفريق</option>';
+  keepValue($("mHome"), empty + opts);
+  keepValue($("mAway"), empty + opts);
+}
 
-  if (b.dataset.act === "team-rename") {
-    const t = teams.find((x) => x.id === id);
-    const n = prompt("اسم الفريق الجديد", t.name);
-    if (n && n.trim()) run(db.from("teams").update({ name: n.trim() }).eq("id", id), "تم التعديل");
-  }
-  if (b.dataset.act === "team-del") {
-    if (confirm("حذف هذا الفريق؟")) run(db.from("teams").delete().eq("id", id), "تم الحذف");
-  }
-  if (b.dataset.act === "player-rename") {
-    const p = players.find((x) => x.id === id);
-    const n = prompt("اسم اللاعب الجديد", p.name);
-    if (n && n.trim()) run(db.from("players").update({ name: n.trim() }).eq("id", id), "تم التعديل");
-  }
-  if (b.dataset.act === "player-del") {
-    if (confirm("حذف هذا اللاعب؟")) run(db.from("players").delete().eq("id", id), "تم الحذف");
-  }
-});
+function resetMatchForm() {
+  editingMatchId = null;
+  $("matchFormTitle").textContent = "جدولة مباراة";
+  $("saveMatchBtn").textContent = "حفظ المباراة";
+  $("cancelMatchBtn").hidden = true;
+  $("mHome").value = "";
+  $("mAway").value = "";
+  $("mKickoff").value = "";
+  $("mVenue").value = DEFAULT_VENUE;
+  $("mReferee").value = DEFAULT_REFEREE;
+  $("mRound").value = "";
+  $("mDuration").value = 60;
+  $("mStatus").value = "scheduled";
+}
 
-/* التبويبات */
-document.querySelectorAll(".tab").forEach((b) => {
-  b.onclick = () => {
-    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === b));
-    $("tab-teams").hidden = b.dataset.tab !== "teams";
-    $("tab-players").hidden = b.dataset.tab !== "players";
+function matchCard(m) {
+  const s = score(m);
+  const showScore = m.status !== "scheduled";
+  const toggle = m.status === "live"
+    ? '<button class="sm" data-act="match-status" data-status="finished" data-id="' + m.id + '">إنهاء المباراة</button>'
+    : '<button class="sm" data-act="match-status" data-status="live" data-id="' + m.id + '">' +
+      (m.status === "finished" ? "إعادة فتح" : "بدء المباراة") + '</button>';
+
+  return '<div class="mcard">' +
+    '<div class="mtop"><span class="pill">المجموعة ' + m.grp + (m.round ? ' · ' + esc(m.round) : '') + '</span>' +
+    '<span class="badge ' + m.status + '">' + STATUS_LABELS[m.status] + '</span></div>' +
+    '<div class="mteams"><b>' + esc(teamName(m.home_team_id)) + '</b>' +
+    '<div class="mscore">' + (showScore ? s.home + ' : ' + s.away : 'VS') + '</div>' +
+    '<b>' + esc(teamName(m.away_team_id)) + '</b></div>' +
+    '<div class="meta">📅 ' + esc(fmtDate(m.kickoff)) + '<br>📍 ' + esc(m.venue || "—") +
+    ' · 🧑‍⚖️ ' + esc(m.referee || "—") + ' · ⏱ ' + m.duration_minutes + ' دقيقة</div>' +
+    '<div class="acts wrap">' + toggle +
+    '<button class="ghost sm" data-act="match-events" data-id="' + m.id + '">+ حدث</button>' +
+    '<button class="ghost sm" data-act="match-edit" data-id="' + m.id + '">تعديل</button>' +
+    '<button class="ghost sm danger" data-act="match-del" data-id="' + m.id + '">حذف</button>' +
+    '</div></div>';
+}
+
+function renderMatches() {
+  const f = $("mFilter").value;
+  const list = matches.filter((m) => f === "all" || m.status === f);
+  $("matchesList").innerHTML = list.length
+    ? list.map(matchCard).join("")
+    : '<p class="empty">' + (matches.length ? "لا مباريات مطابقة" : "لا توجد مباريات بعد") + '</p>';
+}
+
+$("saveMatchBtn").onclick = async () => {
+  const home = $("mHome").value, away = $("mAway").value, grp = $("mGroup").value;
+  const kickoff = $("mKickoff").value;
+  const duration = Number($("mDuration").value);
+
+  if (!home || !away) return toast("اختر الفريقين", true);
+  if (home === away) return toast("يجب اختيار فريقين مختلفين", true);
+  if (!kickoff) return toast("حدد التاريخ والوقت", true);
+  if (!duration || duration < 1) return toast("أدخل مدة صحيحة", true);
+
+  if (editingMatchId) {
+    const stray = events.some((e) => e.match_id === editingMatchId && e.team_id !== home && e.team_id !== away);
+    if (stray) return toast("لا يمكن تغيير الفريقين: توجد أحداث مسجلة لفريق آخر", true);
+  }
+
+  const row = {
+    home_team_id: home,
+    away_team_id: away,
+    grp,
+    round: $("mRound").value.trim() || null,
+    kickoff: new Date(kickoff).toISOString(),
+    referee: $("mReferee").value.trim() || null,
+    venue: $("mVenue").value.trim() || null,
+    duration_minutes: duration,
+    status: $("mStatus").value
   };
-});
 
-$("playerFilter").onchange = renderPlayers;
-$("logoutBtn").onclick = logout;
+  const q = editingMatchId
+    ? db.from("matches").update(row).eq("id", editingMatchId)
+    : db.from("matches").insert(row);
 
-/* التشغيل */
-(async () => {
-  const user = await requireLogin();
-  if (!user) return;
-  $("who").textContent = user.email;
-  $("playerPos").innerHTML =
-    `<option value="">غير محدد</option>` +
-    POSITIONS.map((p) => `<option>${p}</option>`).join("");
+  const { error } = await q;
+  if (error) return toast(friendlyError(error), true);
+  toast(editingMatchId ? "تم تعديل المباراة" : "تمت جدولة المباراة");
+  resetMatchForm();
   await load();
-})();
-</script>
-</body>
-</html>
+};
+
+$("cancelMatchBtn").onclick = resetMatchForm;
+$("mGroup").onchange = fillMatchTeams;
+$("mFilter").onchange = renderMatches;
+
+function editMatch(id) {
+  const m = getMatch(id);
+  if (!m) return;
+  editingMatchId = id;
+  $("mGroup").value = m.grp;
+  fillMatchTeams();
+  $("mHome").value = m.home_team_id;
+  $("mAway").value = m.away_team_id;
+  $("mKickoff").value = toLocalInput(m.kickoff);
+  $("mVenue").value = m.venue || "";
+  $("mReferee").value = m.referee || "";
+  $("mRound").value = m.round || "";
+  $("mDuration").value = m.duration_minutes;
+  $("mStatus").value = m.status;
+  $("matchFormTitle").textContent = "تعديل المباراة";
+  $("saveMatchBtn").textContent = "حفظ التعديلات";
+  $("cancelMatchBtn").hidden = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- الأحداث ---------- */
+const curMatch = () => getMatch($("eMatch").value);
+
+function renderEventMatchSelect() {
+  const sel = $("eMatch");
+  if (!matches.length) {
+    sel.innerHTML = '<option value="">أضف مباراة أولًا</option>';
+    return;
+  }
+  const current = sel.value;
+  sel.innerHTML = matches.map((m) =>
+    '<option value="' + m.id + '">' + esc(matchLabel(m)) + ' — ' + STATUS_LABELS[m.status] + '</option>').join("");
+  if (matches.some((m) => m.id === current)) {
+    sel.value = current;
+  } else {
+    const pick = matches.find((m) => m.status === "live") ||
+                 matches.find((m) => m.status === "scheduled") || matches[0];
+    sel.value = pick.id;
+  }
+}
+
+function fillEventPlayers() {
+  const tid = $("eTeam").value;
+  const list = players.filter((p) => p.team_id === tid);
+  const opts = list.map((p) => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join("");
+  keepValue($("ePlayer"), '<option value="">اختر اللاعب</option>' + opts);
+  keepValue($("eAssist"), '<option value="">بدون</option>' + opts);
+  keepValue($("eSub"), '<option value="">اختر البديل</option>' + opts);
+  $("eHint").hidden = list.length > 0 || !tid;
+}
+
+function toggleEventFields() {
+  const t = $("eType").value;
+  $("assistWrap").hidden = t !== "goal";
+  $("subWrap").hidden = t !== "substitution";
+  $("playerLbl").textContent = t === "substitution" ? "اللاعب الخارج" : t === "goal" ? "المسجّل" : "اللاعب";
+}
+
+function renderEventPanel() {
+  const m = curMatch();
+  if (!m) {
+    $("eTeam").innerHTML = '<option value="">—</option>';
+    fillEventPlayers();
+    $("eScore").textContent = "";
+    $("eBadge").innerHTML = "";
+    $("eStatusActs").innerHTML = "";
+    $("eventsList").innerHTML = '<p class="empty">لا توجد مباراة</p>';
+    return;
+  }
+
+  keepValue($("eTeam"),
+    '<option value="' + m.home_team_id + '">' + esc(teamName(m.home_team_id)) + '</option>' +
+    '<option value="' + m.away_team_id + '">' + esc(teamName(m.away_team_id)) + '</option>');
+  fillEventPlayers();
+  toggleEventFields();
+
+  const s = score(m);
+  $("eScore").textContent = teamName(m.home_team_id) + "  " + s.home + " : " + s.away + "  " + teamName(m.away_team_id);
+  $("eBadge").innerHTML = '<span class="badge ' + m.status + '">' + STATUS_LABELS[m.status] + '</span>';
+
+  $("eStatusActs").innerHTML = m.status === "live"
+    ? '<button class="sm" data-act="match-status" data-status="finished" data-id="' + m.id + '">إنهاء المباراة</button>'
+    : '<button class="sm" data-act="match-status" data-status="live" data-id="' + m.id + '">' +
+      (m.status === "finished" ? "إعادة فتح" : "بدء المباراة") + '</button>';
+
+  const list = events.filter((e) => e.match_id === m.id).sort((a, b) =>
+    (a.minute + a.added_minute / 100) - (b.minute + b.added_minute / 100) ||
+    String(a.created_at).localeCompare(String(b.created_at)));
+
+  $("eventsList").innerHTML = list.length
+    ? list.map((e) => {
+        const who = e.type === "substitution"
+          ? playerName(e.player_id) + " ⇄ " + playerName(e.sub_player_id)
+          : playerName(e.player_id);
+        const extra = e.type === "goal" && e.assist_player_id ? " · صناعة " + playerName(e.assist_player_id) : "";
+        return '<div class="row"><div><b>' + e.minute + "'" + (e.added_minute ? "+" + e.added_minute : "") +
+          ' ' + TYPE_LABELS[e.type] + '</b><small>' + esc(who + extra) + ' · ' + esc(teamName(e.team_id)) +
+          '</small></div><div class="acts">' +
+          '<button class="ghost sm" data-act="event-edit" data-id="' + e.id + '">تعديل</button>' +
+          '<button class="ghost sm danger" data-act="event-del" data-id="' + e.id + '">حذف</button>' +
+          '</div></div>';
+      }).join("")
+    : '<p class="empty">لم تُسجَّل أحدا
