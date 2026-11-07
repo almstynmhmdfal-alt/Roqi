@@ -1,770 +1,787 @@
-(() => {
-  "use strict";
 
-  const $ = (s) => document.querySelector(s);
-  const $$ = (s) => [...document.querySelectorAll(s)];
+/* =========================================
+   بطولة رقي - لوحة الإدارة
+   جدولة المباريات وإدارة الأحداث
+========================================= */
 
-  const storageKey = "roqi-admin-demo-v1";
+const STORAGE_KEY = "roqi-admin-demo-v1";
 
-  const initial = {
-    teams: [
-      "السنوارييون",
-      "فلسطين",
-      "كتائب القسام",
-      "النصر",
-      "البركة",
-      "النسور",
-      "الأسود",
-      "غزة"
-    ].map((name, i) => ({
-      id: i + 1,
-      name,
-      group: i < 4 ? "A" : "B"
-    })),
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
-    matches: [
-      {
-        id: 1,
-        home: "السنوارييون",
-        away: "فلسطين",
-        homeScore: 2,
-        awayScore: 1,
-        status: "finished"
-      },
-      {
-        id: 2,
-        home: "كتائب القسام",
-        away: "النصر",
-        homeScore: 0,
-        awayScore: 0,
-        status: "finished"
-      },
-      {
-        id: 3,
-        home: "البركة",
-        away: "النسور",
-        homeScore: 1,
-        awayScore: 3,
-        status: "finished"
-      },
-      {
-        id: 4,
-        home: "الأسود",
-        away: "غزة",
-        homeScore: 2,
-        awayScore: 2,
-        status: "finished"
-      },
-      {
-        id: 5,
-        home: "السنوارييون",
-        away: "كتائب القسام",
-        homeScore: 0,
-        awayScore: 0,
-        status: "upcoming"
-      },
-      {
-        id: 6,
-        home: "فلسطين",
-        away: "النصر",
-        homeScore: 0,
-        awayScore: 0,
-        status: "upcoming"
-      },
-      {
-        id: 7,
-        home: "البركة",
-        away: "الأسود",
-        homeScore: 0,
-        awayScore: 0,
-        status: "upcoming"
-      },
-      {
-        id: 8,
-        home: "النسور",
-        away: "غزة",
-        homeScore: 0,
-        awayScore: 0,
-        status: "upcoming"
-      }
-    ],
+const makeId = () =>
+  Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-    players: [],
-    events: [],
+const defaultData = {
+  settings: {
+    tournamentName: "بطولة رقي",
+    tournamentEdition: "النسخة الثالثة",
+    matchDuration: 60,
+    defaultReferee: "محمد يحي ربيع",
+    stadiumName: "ملعب بوطريفية",
+    accentColor: "#12b8b0"
+  },
 
-    settings: {
-      title: "بطولة رقي – النسخة الثالثة",
-      association: "رابطة بطولة رقي",
-      stadium: "ملعب بوطريفية",
-      referee: "محمد يحي ربيع",
-      accent: "#12b8b0"
-    }
-  };
+  teams: [
+    { id: "team1", name: "السنوارييون", group: "A" },
+    { id: "team2", name: "فلسطين", group: "A" },
+    { id: "team3", name: "كتائب القسام", group: "A" },
+    { id: "team4", name: "النصر", group: "A" },
+    { id: "team5", name: "البركة", group: "B" },
+    { id: "team6", name: "النسور", group: "B" },
+    { id: "team7", name: "الأسود", group: "B" },
+    { id: "team8", name: "غزة", group: "B" }
+  ],
 
-  let data;
+  players: [],
+  matches: [],
+  events: []
+};
 
+let data = loadData();
+let editingMatchId = null;
+let editingEventId = null;
+let editingTeamId = null;
+let editingPlayerId = null;
+
+/* =========================================
+   تحميل وحفظ البيانات
+========================================= */
+
+function loadData() {
   try {
-    data = JSON.parse(localStorage.getItem(storageKey))
-      || structuredClone(initial);
-  } catch {
-    data = JSON.parse(JSON.stringify(initial));
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+      return structuredClone(defaultData);
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return {
+      ...structuredClone(defaultData),
+      ...parsed,
+      settings: {
+        ...defaultData.settings,
+        ...(parsed.settings || {})
+      },
+      teams: Array.isArray(parsed.teams) ? parsed.teams : [],
+      players: Array.isArray(parsed.players) ? parsed.players : [],
+      matches: Array.isArray(parsed.matches) ? parsed.matches : [],
+      events: Array.isArray(parsed.events) ? parsed.events : []
+    };
+  } catch (error) {
+    console.error("تعذر تحميل البيانات:", error);
+    return structuredClone(defaultData);
   }
+}
 
-  let modalAction = null;
-  let toastTimer;
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
-  const save = () =>
-    localStorage.setItem(storageKey, JSON.stringify(data));
-
-  const esc = (s) =>
-    String(s ?? "").replace(/[&<>"']/g, c => ({
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => {
+    const map = {
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
-      "'": "&#39;"
-    }[c]));
+      "'": "&#039;"
+    };
 
-  const statusText = (s) => ({
-    finished: "انتهت",
-    upcoming: "لم تبدأ",
-    live: "جارية"
-  }[s] || s);
+    return map[char];
+  });
+}
 
-  const statusClass = (s) => ({
-    finished: "finished",
-    upcoming: "upcoming",
-    live: "live"
-  }[s] || "upcoming");
+function showToast(message, type = "success") {
+  const container = $("#toastContainer");
+  if (!container) return;
 
-  const toast = (msg) => {
-    const el = $("#toast");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
 
-    el.textContent = msg;
-    el.classList.add("show");
+  container.appendChild(toast);
 
-    clearTimeout(toastTimer);
+  setTimeout(() => toast.remove(), 3200);
+}
 
-    toastTimer = setTimeout(() => {
-      el.classList.remove("show");
-    }, 2400);
+/* =========================================
+   أدوات عامة
+========================================= */
+
+function getTeam(teamId) {
+  return data.teams.find((team) => team.id === teamId);
+}
+
+function getPlayer(playerId) {
+  return data.players.find((player) => player.id === playerId);
+}
+
+function getMatch(matchId) {
+  return data.matches.find((match) => match.id === matchId);
+}
+
+function teamName(teamId) {
+  return getTeam(teamId)?.name || "فريق غير معروف";
+}
+
+function playerName(playerId) {
+  return getPlayer(playerId)?.name || "لاعب غير معروف";
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "لم يحدد";
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) return "موعد غير صالح";
+
+  return new Intl.DateTimeFormat("ar-MR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function getMatchEvents(matchId) {
+  return data.events.filter((event) => event.matchId === matchId);
+}
+
+function getMatchScore(matchId) {
+  const match = getMatch(matchId);
+
+  if (!match) return { home: 0, away: 0 };
+
+  const goals = getMatchEvents(matchId).filter(
+    (event) => event.type === "goal"
+  );
+
+  return {
+    home: goals.filter((event) => event.teamId === match.homeTeamId).length,
+    away: goals.filter((event) => event.teamId === match.awayTeamId).length
+  };
+}
+
+function getAddedMinutes(match) {
+  return Number(match.firstHalfAdded || 0) +
+    Number(match.secondHalfAdded || 0);
+}
+
+/* =========================================
+   حالة المباراة تلقائيًا
+========================================= */
+
+function getMatchStatus(match) {
+  if (match.manualStatus === "finished") {
+    return "finished";
+  }
+
+  if (match.manualStatus === "live") {
+    return "live";
+  }
+
+  if (!match.dateTime) {
+    return "upcoming";
+  }
+
+  const start = new Date(match.dateTime).getTime();
+
+  if (Number.isNaN(start)) {
+    return "upcoming";
+  }
+
+  const now = Date.now();
+
+  if (now < start) {
+    return "upcoming";
+  }
+
+  const duration = Number(
+    match.duration || data.settings.matchDuration || 60
+  );
+
+  const added = getAddedMinutes(match);
+
+  const endTime = start + (duration + added) * 60 * 1000;
+
+  if (now >= endTime) {
+    return "finished";
+  }
+
+  return "live";
+}
+
+function statusLabel(status) {
+  const labels = {
+    upcoming: "قادمة",
+    live: "جارية",
+    finished: "انتهت"
   };
 
-  function switchView(name) {
-    $$(".view").forEach(v =>
-      v.classList.toggle("active", v.id === `view-${name}`)
+  return labels[status] || "غير محددة";
+}
+
+function statusClass(status) {
+  return status || "upcoming";
+}
+
+function matchStatusHTML(match) {
+  const status = getMatchStatus(match);
+
+  return `
+    <span class="match-status ${statusClass(status)}">
+      ${statusLabel(status)}
+    </span>
+  `;
+}
+
+/* =========================================
+   التنقل بين صفحات الإدارة
+========================================= */
+
+function openSection(sectionId) {
+  $$(".page-section").forEach((section) => {
+    section.classList.toggle("active", section.id === sectionId);
+  });
+
+  $$(".nav-item").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.section === sectionId
     );
+  });
 
-    $$(".nav-item").forEach(b =>
-      b.classList.toggle("active", b.dataset.view === name)
-    );
+  const activeButton = $(`.nav-item[data-section="${sectionId}"]`);
 
-    const labels = {
-      overview: "نظرة عامة",
-      matches: "إدارة المباريات",
-      teams: "إدارة الفرق",
-      players: "إدارة اللاعبين",
-      events: "أحداث المباريات",
-      settings: "إعدادات البطولة"
-    };
-
-    $("#pageTitle").textContent = labels[name] || "لوحة الإدارة";
-
-    $("#sidebar").classList.remove("open");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  if (activeButton) {
+    $("#pageTitle").textContent =
+      activeButton.querySelector("span:last-child")?.textContent ||
+      "لوحة الإدارة";
   }
 
-  function matchCard(m) {
-    return `
-      <div class="mini-match">
-        <div>
-          <div class="teams">
-            ${esc(m.home)}
-            <span style="color:#9aa6ae">×</span>
-            ${esc(m.away)}
-          </div>
-          <div class="state">${statusText(m.status)}</div>
+  $("#sidebar")?.classList.remove("open");
+}
+
+$$(".nav-item").forEach((button) => {
+  button.addEventListener("click", () => {
+    openSection(button.dataset.section);
+  });
+});
+
+$$("[data-open-section]").forEach((button) => {
+  button.addEventListener("click", () => {
+    openSection(button.dataset.openSection);
+  });
+});
+
+$("#menuToggle")?.addEventListener("click", () => {
+  $("#sidebar")?.classList.toggle("open");
+});
+
+/* =========================================
+   النافذة المنبثقة
+========================================= */
+
+function openModal(title, content) {
+  $("#modalTitle").textContent = title;
+  $("#modalBody").innerHTML = content;
+  $("#modalOverlay").classList.add("open");
+}
+
+function closeModal() {
+  $("#modalOverlay").classList.remove("open");
+  $("#modalBody").innerHTML = "";
+
+  editingMatchId = null;
+  editingEventId = null;
+  editingTeamId = null;
+  editingPlayerId = null;
+}
+
+$("#modalClose")?.addEventListener("click", closeModal);
+
+$("#modalOverlay")?.addEventListener("click", (event) => {
+  if (event.target === $("#modalOverlay")) {
+    closeModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeModal();
+  }
+});
+
+/* =========================================
+   خيارات الفرق واللاعبين
+========================================= */
+
+function teamOptions(selectedId = "", includeEmpty = false) {
+  let html = includeEmpty
+    ? `<option value="">اختر الفريق</option>`
+    : "";
+
+  html += data.teams.map((team) => `
+    <option
+      value="${escapeHTML(team.id)}"
+      ${team.id === selectedId ? "selected" : ""}
+    >
+      ${escapeHTML(team.name)} - المجموعة ${escapeHTML(team.group)}
+    </option>
+  `).join("");
+
+  return html;
+}
+
+function playerOptions(teamId = "", selectedId = "", includeEmpty = true) {
+  const players = data.players.filter((player) => {
+    return !teamId || player.teamId === teamId;
+  });
+
+  let html = includeEmpty
+    ? `<option value="">لا يوجد / غير محدد</option>`
+    : "";
+
+  html += players.map((player) => `
+    <option
+      value="${escapeHTML(player.id)}"
+      ${player.id === selectedId ? "selected" : ""}
+    >
+      ${escapeHTML(player.name)}
+    </option>
+  `).join("");
+
+  return html;
+}
+
+function matchOptions(selectedId = "") {
+  let html = `<option value="">اختر المباراة</option>`;
+
+  html += data.matches.map((match) => `
+    <option
+      value="${escapeHTML(match.id)}"
+      ${match.id === selectedId ? "selected" : ""}
+    >
+      ${escapeHTML(teamName(match.homeTeamId))}
+      ×
+      ${escapeHTML(teamName(match.awayTeamId))}
+      — ${escapeHTML(formatDate(match.dateTime))}
+    </option>
+  `).join("");
+
+  return html;
+}
+
+/* =========================================
+   إضافة وتعديل مباراة
+========================================= */
+
+function openMatchForm(matchId = null) {
+  const match = matchId ? getMatch(matchId) : null;
+
+  editingMatchId = matchId;
+
+  const currentDate = match?.dateTime
+    ? new Date(match.dateTime)
+    : null;
+
+  const localDateTime = currentDate
+    ? new Date(
+        currentDate.getTime() -
+        currentDate.getTimezoneOffset() * 60000
+      ).toISOString().slice(0, 16)
+    : "";
+
+  const content = `
+    <form id="matchForm">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>الفريق الأول</label>
+          <select name="homeTeamId" required>
+            ${teamOptions(match?.homeTeamId || "", true)}
+          </select>
         </div>
 
-        <div class="score">
-          ${
-            m.status === "upcoming"
-              ? "—"
-              : `${m.homeScore} : ${m.awayScore}`
-          }
+        <div class="form-group">
+          <label>الفريق الثاني</label>
+          <select name="awayTeamId" required>
+            ${teamOptions(match?.awayTeamId || "", true)}
+          </select>
         </div>
+
+        <div class="form-group">
+          <label>المجموعة</label>
+          <select name="group" required>
+            <option value="A" ${match?.group === "A" ? "selected" : ""}>
+              المجموعة A
+            </option>
+            <option value="B" ${match?.group === "B" ? "selected" : ""}>
+              المجموعة B
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>تاريخ ووقت المباراة</label>
+          <input
+            type="datetime-local"
+            name="dateTime"
+            value="${escapeHTML(localDateTime)}"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>حكم اللقاء</label>
+          <input
+            type="text"
+            name="referee"
+            value="${escapeHTML(
+              match?.referee || data.settings.defaultReferee
+            )}"
+            placeholder="اسم الحكم"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>الملعب</label>
+          <input
+            type="text"
+            name="stadium"
+            value="${escapeHTML(
+              match?.stadium || data.settings.stadiumName
+            )}"
+            placeholder="اسم الملعب"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>مدة المباراة بالدقائق</label>
+          <input
+            type="number"
+            name="duration"
+            min="1"
+            value="${escapeHTML(
+              match?.duration || data.settings.matchDuration
+            )}"
+            required
+          >
+          <small>يمكن تخصيص مدة مختلفة لهذه المباراة.</small>
+        </div>
+
+        <div class="form-group">
+          <label>الجولة</label>
+          <input
+            type="text"
+            name="round"
+            value="${escapeHTML(match?.round || "")}"
+            placeholder="مثال: الجولة الأولى"
+          >
+        </div>
+
       </div>
-    `;
-  }
 
-  function renderOverview() {
-    $("#statMatches").textContent = data.matches.length;
-    $("#statTeams").textContent = data.teams.length;
-    $("#statPlayers").textContent = data.players.length;
-    $("#statEvents").textContent = data.events.length;
+      <div class="form-actions">
+        <button class="primary-btn" type="submit">
+          ${match ? "حفظ التعديلات" : "إضافة المباراة"}
+        </button>
 
-    $("#overviewMatches").innerHTML =
-      data.matches.slice(0, 4).map(matchCard).join("")
-      || '<p class="empty">لا توجد مباريات بعد.</p>';
-  }
-
-  function renderMatches() {
-    const q = $("#matchSearch").value.trim().toLowerCase();
-    const f = $("#matchFilter").value;
-
-    const rows = data.matches.filter(m =>
-      (f === "all" || m.status === f)
-      && `${m.home} ${m.away}`.toLowerCase().includes(q)
-    );
-
-    $("#matchesTable").innerHTML = rows.map(m => `
-      <tr>
-        <td>
-          <div class="match-name">
-            ${esc(m.home)}
-            <span style="color:#91a0a8">×</span>
-            ${esc(m.away)}
-          </div>
-          <div class="match-sub">مباراة تجريبية · #${m.id}</div>
-        </td>
-
-        <td class="score-cell">
-          ${
-            m.status === "upcoming"
-              ? "—"
-              : `${m.homeScore} : ${m.awayScore}`
-          }
-        </td>
-
-        <td>
-          <span class="status ${statusClass(m.status)}">
-            ${statusText(m.status)}
-          </span>
-        </td>
-
-        <td>
-          <button class="action-button" data-edit-match="${m.id}">
-            تعديل
-          </button>
-
-          <button class="action-button delete" data-delete-match="${m.id}">
-            حذف
-          </button>
-        </td>
-      </tr>
-    `).join("") || `
-      <tr>
-        <td colspan="4">لا توجد مباريات مطابقة.</td>
-      </tr>
-    `;
-  }
-
-  function renderTeams() {
-    $("#teamsGrid").innerHTML = data.teams.map(t => `
-      <article class="team-card">
-        <div class="team-badge">${esc(t.name.slice(0, 1))}</div>
-
-        <div class="team-info">
-          <b>${esc(t.name)}</b>
-          <small>المجموعة ${esc(t.group || "—")}</small>
-
-          <button class="action-button" data-edit-team="${t.id}">
-            تعديل
-          </button>
-
-          <button class="action-button delete" data-delete-team="${t.id}">
-            حذف
-          </button>
-        </div>
-      </article>
-    `).join("") || "<p>لم تُضف فرق بعد.</p>";
-  }
-
-  function renderPlayers() {
-    const filter = $("#playerTeamFilter").value || "all";
-    const q = $("#playerSearch").value.trim().toLowerCase();
-
-    $("#playerTeamFilter").innerHTML =
-      '<option value="all">كل الفرق</option>'
-      + data.teams.map(t => `
-        <option value="${esc(t.name)}">${esc(t.name)}</option>
-      `).join("");
-
-    $("#playerTeamFilter").value = filter;
-
-    const rows = data.players.filter(p =>
-      (filter === "all" || p.team === filter)
-      && p.name.toLowerCase().includes(q)
-    );
-
-    $("#playersTable").innerHTML = rows.map(p => `
-      <tr>
-        <td><b>${esc(p.name)}</b></td>
-        <td>${esc(p.team)}</td>
-
-        <td>
-          <button class="action-button" data-edit-player="${p.id}">
-            تعديل
-          </button>
-
-          <button class="action-button delete" data-delete-player="${p.id}">
-            حذف
-          </button>
-        </td>
-      </tr>
-    `).join("") || `
-      <tr>
-        <td colspan="3">لا يوجد لاعبون مضافون بعد.</td>
-      </tr>
-    `;
-  }
-
-  function renderEvents() {
-    $("#eventsList").innerHTML = data.events.map(e => `
-      <div class="event-row">
-        <span class="event-type">
-          ${
-            e.type === "هدف"
-              ? "⚽"
-              : e.type === "بطاقة صفراء"
-                ? "🟨"
-                : e.type === "بطاقة حمراء"
-                  ? "🟥"
-                  : "↔"
-          }
-        </span>
-
-        <div class="event-info">
-          <b>${esc(e.type)} · ${esc(e.player)}</b>
-
-          <small>
-            ${esc(e.team)}
-            ·
-            ${esc(e.match || "حدث تجريبي")}
-            ${e.minute ? ` · ${esc(e.minute)}'` : ""}
-          </small>
-        </div>
-
-        <button class="action-button delete" data-delete-event="${e.id}">
-          حذف
+        <button class="secondary-btn" type="button" id="cancelMatch">
+          إلغاء
         </button>
       </div>
-    `).join("") || `
-      <p style="color:#87959e;text-align:center;padding:25px">
-        لا توجد أحداث مسجلة. يمكنك إضافتها من الزر أعلاه.
-      </p>
-    `;
-  }
 
-  function renderAll() {
-    renderOverview();
-    renderMatches();
-    renderTeams();
-    renderPlayers();
-    renderEvents();
-  }
+    </form>
+  `;
 
-  function field(
-    label,
-    name,
-    type = "text",
-    value = "",
-    options = null,
-    required = true
-  ) {
-    let input = options
-      ? `
-        <select name="${name}" ${required ? "required" : ""}>
-          ${options.map(o => `
-            <option
-              value="${esc(o.value)}"
-              ${String(o.value) === String(value) ? "selected" : ""}
-            >
-              ${esc(o.label)}
-            </option>
-          `).join("")}
-        </select>
-      `
-      : `
-        <input
-          name="${name}"
-          type="${type}"
-          value="${esc(value)}"
-          ${required ? "required" : ""}
-          ${type === "number" ? 'min="0"' : ""}
-        >
-      `;
+  openModal(match ? "تعديل المباراة" : "جدولة مباراة جديدة", content);
 
-    return `<label>${label}${input}</label>`;
-  }
+  $("#cancelMatch").addEventListener("click", closeModal);
 
-  function openModal(title, fields, handler) {
-    $("#modalTitle").textContent = title;
-    $("#modalFields").innerHTML = fields;
-    modalAction = handler;
-    $("#modalBackdrop").hidden = false;
-  }
+  $("#matchForm").addEventListener("submit", (event) => {
+    event.preventDefault();
 
-  function closeModal() {
-    $("#modalBackdrop").hidden = true;
-    $("#modalForm").reset();
-    modalAction = null;
-  }
+    const form = new FormData(event.currentTarget);
 
-  function submitModal(e) {
-    e.preventDefault();
+    const homeTeamId = form.get("homeTeamId");
+    const awayTeamId = form.get("awayTeamId");
 
-    if (!modalAction) return;
+    if (homeTeamId === awayTeamId) {
+      showToast("يجب اختيار فريقين مختلفين", "error");
+      return;
+    }
 
-    const values = Object.fromEntries(
-      new FormData(e.currentTarget).entries()
-    );
+    const homeTeam = getTeam(homeTeamId);
+    const awayTeam = getTeam(awayTeamId);
 
-    modalAction(values);
+    if (!homeTeam || !awayTeam) {
+      showToast("الفريق غير موجود", "error");
+      return;
+    }
 
+    if (homeTeam.group !== awayTeam.group) {
+      showToast("يجب أن يكون الفريقان من المجموعة نفسها", "error");
+      return;
+    }
+
+    const matchData = {
+      id: match?.id || makeId(),
+      homeTeamId,
+      awayTeamId,
+      group: form.get("group"),
+      dateTime: new Date(form.get("dateTime")).toISOString(),
+      referee: form.get("referee").trim(),
+      stadium: form.get("stadium").trim(),
+      duration: Number(form.get("duration")),
+      round: form.get("round").trim(),
+      firstHalfAdded: match?.firstHalfAdded || 0,
+      secondHalfAdded: match?.secondHalfAdded || 0,
+      manualStatus: match?.manualStatus || "auto"
+    };
+
+    if (!matchData.duration || matchData.duration < 1) {
+      showToast("أدخل مدة صحيحة للمباراة", "error");
+      return;
+    }
+
+    if (match) {
+      data.matches = data.matches.map((item) =>
+        item.id === match.id ? matchData : item
+      );
+    } else {
+      data.matches.push(matchData);
+    }
+
+    saveData();
     closeModal();
-    save();
     renderAll();
-  }
 
-  function addMatch(existing = null) {
-    const m = existing || {
-      home: data.teams[0]?.name || "",
-      away: data.teams[1]?.name || "",
-      homeScore: 0,
-      awayScore: 0,
-      status: "upcoming"
-    };
-
-    const teamOptions = data.teams.map(t => ({
-      value: t.name,
-      label: t.name
-    }));
-
-    openModal(
-      existing ? "تعديل المباراة" : "إضافة مباراة",
-
-      field("الفريق الأول", "home", "text", m.home, teamOptions)
-      + field("الفريق الثاني", "away", "text", m.away, teamOptions)
-      + field("نتيجة الفريق الأول", "homeScore", "number", m.homeScore)
-      + field("نتيجة الفريق الثاني", "awayScore", "number", m.awayScore)
-      + field(
-        "حالة المباراة",
-        "status",
-        "text",
-        m.status,
-        [
-          { value: "upcoming", label: "لم تبدأ" },
-          { value: "live", label: "جارية" },
-          { value: "finished", label: "انتهت" }
-        ]
-      ),
-
-      v => {
-        if (v.home === v.away) {
-          toast("اختر فريقين مختلفين.");
-          return;
-        }
-
-        if (existing) {
-          Object.assign(existing, v, {
-            homeScore: +v.homeScore,
-            awayScore: +v.awayScore
-          });
-        } else {
-          data.matches.push({
-            ...v,
-            id: Date.now(),
-            homeScore: +v.homeScore,
-            awayScore: +v.awayScore
-          });
-        }
-
-        toast("تم حفظ المباراة على هذا الجهاز.");
-      }
-    );
-  }
-
-  function addTeam(existing = null) {
-    const t = existing || {
-      name: "",
-      group: "A"
-    };
-
-    openModal(
-      existing ? "تعديل الفريق" : "إضافة فريق",
-
-      field("اسم الفريق", "name", "text", t.name)
-      + field(
-        "المجموعة",
-        "group",
-        "text",
-        t.group,
-        [
-          { value: "A", label: "A" },
-          { value: "B", label: "B" }
-        ]
-      ),
-
-      v => {
-        if (existing) {
-          Object.assign(existing, v);
-        } else {
-          data.teams.push({
-            ...v,
-            id: Date.now()
-          });
-        }
-
-        toast("تم حفظ الفريق محليًا.");
-      }
-    );
-  }
-
-  function addPlayer(existing = null) {
-    const p = existing || {
-      name: "",
-      team: data.teams[0]?.name || ""
-    };
-
-    const opts = data.teams.map(t => ({
-      value: t.name,
-      label: t.name
-    }));
-
-    openModal(
-      existing ? "تعديل اللاعب" : "إضافة لاعب",
-
-      field("اسم اللاعب", "name", "text", p.name)
-      + field("الفريق", "team", "text", p.team, opts),
-
-      v => {
-        if (existing) {
-          Object.assign(existing, v);
-        } else {
-          data.players.push({
-            ...v,
-            id: Date.now()
-          });
-        }
-
-        toast("تم حفظ اللاعب محليًا.");
-      }
-    );
-  }
-
-  function addEvent() {
-    const matchOpts = data.matches.map(m => ({
-      value: `${m.home} × ${m.away}`,
-      label: `${m.home} × ${m.away}`
-    }));
-
-    const teamOpts = data.teams.map(t => ({
-      value: t.name,
-      label: t.name
-    }));
-
-    const playerOpts = [
-      { value: "غير محدد", label: "غير محدد" },
-      ...data.players.map(p => ({
-        value: p.name,
-        label: `${p.name} — ${p.team}`
-      }))
-    ];
-
-    openModal(
-      "إضافة حدث للمباراة",
-
-      field(
-        "نوع الحدث",
-        "type",
-        "text",
-        "هدف",
-        [
-          { value: "هدف", label: "هدف" },
-          { value: "بطاقة صفراء", label: "بطاقة صفراء" },
-          { value: "بطاقة حمراء", label: "بطاقة حمراء" },
-          { value: "تبديل", label: "تبديل" }
-        ]
-      )
-      + field(
-        "المباراة",
-        "match",
-        "text",
-        matchOpts[0]?.value || "",
-        matchOpts,
-        false
-      )
-      + field(
-        "الفريق",
-        "team",
-        "text",
-        teamOpts[0]?.value || "",
-        teamOpts
-      )
-      + field(
-        "اللاعب",
-        "player",
-        "text",
-        "غير محدد",
-        playerOpts,
-        false
-      )
-      + field(
-        "الدقيقة",
-        "minute",
-        "number",
-        "",
-        null,
-        false
-      ),
-
-      v => {
-        data.events.push({
-          ...v,
-          id: Date.now()
-        });
-
-        toast("تم تسجيل الحدث محليًا.");
-      }
-    );
-  }
-
-  $$(".nav-item").forEach(b =>
-    b.addEventListener("click", () => switchView(b.dataset.view))
-  );
-
-  $$("[data-go]").forEach(b =>
-    b.addEventListener("click", () => switchView(b.dataset.go))
-  );
-
-  $("#menuToggle").addEventListener("click", () =>
-    $("#sidebar").classList.toggle("open")
-  );
-
-  $("#addMatchBtn").addEventListener("click", () => addMatch());
-  $("#addTeamBtn").addEventListener("click", () => addTeam());
-  $("#addPlayerBtn").addEventListener("click", () => addPlayer());
-  $("#addEventBtn").addEventListener("click", addEvent);
-
-  $("#matchSearch").addEventListener("input", renderMatches);
-  $("#matchFilter").addEventListener("change", renderMatches);
-
-  $("#playerSearch").addEventListener("input", renderPlayers);
-  $("#playerTeamFilter").addEventListener("change", renderPlayers);
-
-  $("#closeModal").addEventListener("click", closeModal);
-  $("#cancelModal").addEventListener("click", closeModal);
-
-  $("#modalBackdrop").addEventListener("click", e => {
-    if (e.target === $("#modalBackdrop")) {
-      closeModal();
-    }
+    showToast(match ? "تم تعديل المباراة" : "تمت جدولة المباراة");
   });
+}
 
-  $("#modalForm").addEventListener("submit", submitModal);
+$("#addMatchBtn")?.addEventListener("click", () => {
+  openMatchForm();
+});
 
-  document.addEventListener("click", e => {
-    const b = e.target.closest("button");
+/* =========================================
+   إدارة أحداث المباراة
+========================================= */
 
-    if (!b) return;
+function openEventForm(eventId = null, presetMatchId = "") {
+  const existing = eventId
+    ? data.events.find((item) => item.id === eventId)
+    : null;
 
-    if (b.dataset.editMatch) {
-      const m = data.matches.find(
-        x => x.id === +b.dataset.editMatch
-      );
+  editingEventId = eventId;
 
-      if (m) addMatch(m);
-    }
+  const selectedMatchId = existing?.matchId || presetMatchId;
+  const selectedMatch = getMatch(selectedMatchId);
 
-    if (b.dataset.deleteMatch) {
-      data.matches = data.matches.filter(
-        x => x.id !== +b.dataset.deleteMatch
-      );
+  const selectedTeamId = existing?.teamId ||
+    selectedMatch?.homeTeamId ||
+    "";
 
-      save();
-      renderAll();
-      toast("حُذفت المباراة من التخزين المحلي.");
-    }
+  const content = `
+    <form id="eventForm">
 
-    if (b.dataset.editTeam) {
-      const t = data.teams.find(
-        x => x.id === +b.dataset.editTeam
-      );
+      <div class="form-grid">
 
-      if (t) addTeam(t);
-    }
+        <div class="form-group full-width">
+          <label>المباراة</label>
+          <select name="matchId" id="eventMatchSelect" required>
+            ${matchOptions(selectedMatchId)}
+          </select>
+        </div>
 
-    if (b.dataset.deleteTeam) {
-      const t = data.teams.find(
-        x => x.id === +b.dataset.deleteTeam
-      );
+        <div class="form-group">
+          <label>نوع الحدث</label>
+          <select name="type" id="eventTypeSelect" required>
+            <option value="goal" ${existing?.type === "goal" ? "selected" : ""}>
+              ⚽ هدف
+            </option>
+            <option value="yellow" ${existing?.type === "yellow" ? "selected" : ""}>
+              🟨 بطاقة صفراء
+            </option>
+            <option value="red" ${existing?.type === "red" ? "selected" : ""}>
+              🟥 بطاقة حمراء
+            </option>
+            <option value="substitution" ${existing?.type === "substitution" ? "selected" : ""}>
+              🔄 تبديل
+            </option>
+          </select>
+        </div>
 
-      if (t && confirm(`حذف فريق ${t.name}؟`)) {
-        data.teams = data.teams.filter(x => x.id !== t.id);
+        <div class="form-group">
+          <label>الفريق</label>
+          <select name="teamId" id="eventTeamSelect" required>
+            ${teamOptions(selectedTeamId, true)}
+          </select>
+        </div>
 
-        save();
-        renderAll();
-        toast("حُذف الفريق محليًا.");
-      }
-    }
+        <div class="form-group">
+          <label>دقيقة الحدث</label>
+          <input
+            type="number"
+            name="minute"
+            min="0"
+            value="${escapeHTML(existing?.minute ?? 1)}"
+            required
+          >
+          <small>أدخل الدقيقة الأساسية، مثل 45 أو 90.</small>
+        </div>
 
-    if (b.dataset.editPlayer) {
-      const p = data.players.find(
-        x => x.id === +b.dataset.editPlayer
-      );
+        <div class="form-group">
+          <label>الوقت بدل الضائع</label>
+          <input
+            type="number"
+            name="addedMinute"
+            min="0"
+            value="${escapeHTML(existing?.addedMinute ?? 0)}"
+          >
+          <small>مثال: 45+3، أدخل هنا 3.</small>
+        </div>
 
-      if (p) addPlayer(p);
-    }
+        <div class="form-group full-width">
+          <label>اللاعب</label>
+          <select name="playerId" id="eventPlayerSelect">
+            ${playerOptions(selectedTeamId, existing?.playerId || "")}
+          </select>
+        </div>
 
-    if (b.dataset.deletePlayer) {
-      data.players = data.players.filter(
-        x => x.id !== +b.dataset.deletePlayer
-      );
+        <div class="form-group full-width" id="assistGroup">
+          <label>صانع الهدف</label>
+          <select name="assistPlayerId" id="assistPlayerSelect">
+            ${playerOptions(selectedTeamId, existing?.assistPlayerId || "")}
+          </select>
+        </div>
 
-      save();
-      renderAll();
-      toast("حُذف اللاعب محليًا.");
-    }
+        <div class="form-group full-width" id="substitutionGroup">
+          <label>اللاعب البديل</label>
+          <select name="substitutePlayerId" id="substitutePlayerSelect">
+            ${playerOptions(selectedTeamId, existing?.substitutePlayerId || "")}
+          </select>
+        </div>
 
-    if (b.dataset.deleteEvent) {
-      data.events = data.events.filter(
-        x => x.id !== +b.dataset.deleteEvent
-      );
+        <div class="form-group full-width">
+          <label>ملاحظات</label>
+          <input
+            type="text"
+            name="notes"
+            value="${escapeHTML(existing?.notes || "")}"
+            placeholder="ملاحظات اختيارية"
+          >
+        </div>
 
-      save();
-      renderAll();
-      toast("حُذف الحدث محليًا.");
-    }
-  });
+      </div>
 
-  $("#settingsForm").addEventListener("submit", e => {
-    e.preventDefault();
+      <div class="form-actions">
+        <button class="primary-btn" type="submit">
+          ${existing ? "حفظ التعديل" : "إضافة الحدث"}
+        </button>
 
-    data.settings = Object.fromEntries(
-      new FormData(e.currentTarget).entries()
+        <button class="secondary-btn" type="button" id="cancelEvent">
+          إلغاء
+        </button>
+      </div>
+
+    </form>
+  `;
+
+  openModal(existing ? "تعديل حدث" : "إضافة حدث للمباراة", content);
+
+  const matchSelect = $("#eventMatchSelect");
+  const teamSelect = $("#eventTeamSelect");
+  const typeSelect = $("#eventTypeSelect");
+
+  function refreshEventPlayerOptions() {
+    const teamId = teamSelect.value;
+
+    $("#eventPlayerSelect").innerHTML = playerOptions(
+      teamId,
+      existing?.playerId || ""
     );
 
-    document.documentElement.style.setProperty(
-      "--turquoise",
-      data.settings.accent
+    $("#assistPlayerSelect").innerHTML = playerOptions(
+      teamId,
+      existing?.assistPlayerId || ""
     );
 
-    save();
-
-    toast("حُفظت الإعدادات على هذا الجهاز.");
-  });
-
-  if (data.settings?.accent) {
-    document.documentElement.style.setProperty(
-      "--turquoise",
-      data.settings.accent
+    $("#substitutePlayerSelect").innerHTML = playerOptions(
+      teamId,
+      existing?.substitutePlayerId || ""
     );
   }
 
-  renderAll();
-})();
+  function refreshEventTeamOptions() {
+    const match = getMatch(matchSelect.value);
+
+    if (!match) {
+      teamSelect.innerHTML = teamOptions("", true);
+      refreshEventPlayerOptions();
+      return;
+    }
+
+    const previousTeamId = teamSelect.value;
+
+    teamSelect.innerHTML = `
+      <option value="${match.homeTeamId}">
+        ${escapeHTML(teamName(match.homeTeamId))}
+      </option>
+      <option value="${match.awayTeamId}">
+        ${escapeHTML(teamName(match.awayTeamId))}
+      </option>
+    `;
+
+    if (
+      previousTeamId === match.homeTeamId ||
+      previousTeamId === match.awayTeamId
+    ) {
+      teamSelect.value = previousTeamId;
+    }
+
+    refreshEventPlayerOptions();
+  }
+
+  function refreshEventTypeFields() {
+    const type = typeSelect.value;
+
+    $("#assistGroup").style.display =
+      type === "goal" ? "" : "none";
+
+    $("#substitutionGroup").style.display =
+      type === "substitution" ? "" : "none";
+  }
+
+  matchSelect.addEventListener("change", refreshEventTeamOptions);
+  teamSelect.addEventListener("change", refreshEventPlayerOptions);
+  typeSelect.addEventListener("change", refreshEventTypeFields);
+
+  $("#cancelEvent").addEventListener("click", closeModal);
+
+  refreshEventTeamOptions();
+  refreshEventTypeFields();
+
+  $("#eventForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+
+    const matchId = form.get("matchId");
+    const match = getMatch(matchId);
+    const teamId = form.get("teamId");
+    const type = form.get("type");
+    const playerId = form.get("playerId") || "";
+    const assistPlayerId = form.get("assistPlayerId") || "";
+    const substitutePlayerId = form.get("substitutePlayerId") || "";
+
+    if (!match) {
+      showToast("اختر مباراة صحيحة", "error");
+      return;
