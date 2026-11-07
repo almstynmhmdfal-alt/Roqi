@@ -108,6 +108,7 @@ $("loginForm").addEventListener("submit", async (e) => {
   }
   $("password").value = "";
   say("تم تسجيل الدخول ✅");
+location.href = "admin.html";
   showUser(data.user);
 });
 
